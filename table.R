@@ -5,7 +5,6 @@ library(gt)
 library(glue)
 library(rsvg)
 
-
 # Data Reading & Wrangling ------------------------------------------------
 # Icons Directories Paths
 grapes_dir <- here::here("Data", "Grapes Varieties") 
