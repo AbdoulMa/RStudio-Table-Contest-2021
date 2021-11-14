@@ -14,15 +14,10 @@ ___
 <h3 align="center">Some of the best wines in the world</h3>
 
 ![](Graphics/top_wines_from_pdf.png)
-<details>
-<summary> Expand to see some of best Burgundy Wines under 40$  and rated 3.8+ </summary>
-![](Graphics/burgundy_wines_under_40.png) 
-</details>
 
-<details>
-<summary> Expand to see some of best USA Wines under 40$ and rated 3.8+ </summary>
-![](Graphics/usa_wines_under_40.png) 
-</details>
+![see some of best Burgundy Wines under 40$  and rated 3.8+](Graphics/burgundy_wines_under_40.png) 
+
+![see some of best USA Wines under 40$ and rated 3.8+](Graphics/usa_wines_under_40.png) 
 
 ## Data Scraping 
 ___
@@ -85,29 +80,19 @@ For the rating stars column, I created a `rating_combo()` function which takes
 the average rating, the number of ratings, and other parameters as arguments and returns as output
 a fancy star rating corresponding.
 
-<details>
-  <summary>Expand to see an example</summary>
-  ![](Examples/stars_svg_gt.png)
-</details>
-
+![see an example](Examples/stars_svg_gt.png)
 
 ###  Grapes Rows
 For the grape variety column, I have also developed a function which takes as parameter a string corresponding to the different grapes used in the production of a wine and which returns a corresponding html line consisting of svg of grapes filled with appropriate colors.
 A code mixing the `{rsvg}`, `{whisker}` and `{magick}` packages was used to achieve this.
 
-<details>
-  <summary>Expand to see an example</summary>
-  ![](Examples/grapes_varieties.png)
-</details>
+![See an example](Examples/grapes_varieties.png)
 
 ### Foods Icons 
 
 At this stage, I carried out the same operation as the previous one with the only difference that instead of generating the images of the grapes from a string of grapes varieties, I generate the list of food pairings from a string. CSS styling is used to form rounded borders.
 
-<details>
-  <summary>Expand to see an example</summary>
-  ![](Examples/food_icons.png)
-</details>
+![See an example](Examples/food_icons.png)
 
 ### Other Columns 
 
