@@ -15,9 +15,9 @@ ___
 
 ![](Graphics/top_wines_from_pdf.png)
 
-<b> [see some of best Burgundy Wines under 40$  and rated 3.8+](Graphics/burgundy_wines_under_40.png) </b>
+<b> [See some of best Burgundy Wines under 40$  and rated 3.8+](Graphics/burgundy_wines_under_40.png) </b>
 
-<b> [see some of best USA Wines under 40$ and rated 3.8+](Graphics/usa_wines_under_40.png) </b>
+<b> [See some of best USA Wines under 40$ and rated 3.8+](Graphics/usa_wines_under_40.png) </b>
 
 ## Data Scraping 
 ___
