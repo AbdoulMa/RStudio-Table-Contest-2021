@@ -15,9 +15,9 @@ ___
 
 ![](Graphics/top_wines_from_pdf.png)
 
-** [see some of best Burgundy Wines under 40$  and rated 3.8+](Graphics/burgundy_wines_under_40.png) **
+<b> [see some of best Burgundy Wines under 40$  and rated 3.8+](Graphics/burgundy_wines_under_40.png) </b>
 
-** [see some of best USA Wines under 40$ and rated 3.8+](Graphics/usa_wines_under_40.png) ** 
+<b> [see some of best USA Wines under 40$ and rated 3.8+](Graphics/usa_wines_under_40.png) </b>
 
 ## Data Scraping 
 ___
@@ -80,19 +80,19 @@ For the rating stars column, I created a `rating_combo()` function which takes
 the average rating, the number of ratings, and other parameters as arguments and returns as output
 a fancy star rating corresponding.
 
-** [see an example](Examples/stars_svg_gt.png) ** 
+<b> [see an example](Examples/stars_svg_gt.png) </b>
 
 ###  Grapes Rows
 For the grape variety column, I have also developed a function which takes as parameter a string corresponding to the different grapes used in the production of a wine and which returns a corresponding html line consisting of svg of grapes filled with appropriate colors.
 A code mixing the `{rsvg}`, `{whisker}` and `{magick}` packages was used to achieve this.
 
-** [See an example](Examples/grapes_varieties.png) **
+<b> [See an example](Examples/grapes_varieties.png) </b>
 
 ### Foods Icons 
 
 At this stage, I carried out the same operation as the previous one with the only difference that instead of generating the images of the grapes from a string of grapes varieties, I generate the list of food pairings from a string. CSS styling is used to form rounded borders.
 
-** [See an example](Examples/food_icons.png) **
+<b> [See an example](Examples/food_icons.png) </b>
 
 ### Other Columns 
 
