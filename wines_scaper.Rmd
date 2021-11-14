@@ -1,0 +1,370 @@
+---
+author : "Aboul ISSA BIDA"
+title : "Wines Scraper"
+---
+
+```{r setup, include=F}
+library(tidyverse)
+library(reticulate)
+library(rvest)
+library(httr2)
+library(RSelenium)
+```
+
+
+```{r}
+# Specify Python bin Path
+use_python('/usr/local/bin/python3.7')
+```
+
+```{python gecko_driver_loading}
+import os
+import re
+import sys
+import tarfile
+import zipfile
+import requests
+from argparse import ArgumentParser
+from time import sleep
+from bs4 import BeautifulSoup
+from selenium.common.exceptions import (NoSuchElementException,
+                                        StaleElementReferenceException,
+                                        TimeoutException)
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from seleniumwire import webdriver
+from urllib.parse import urljoin
+
+def check_gecko_driver():
+    script_dir = os.path.dirname(os.path.abspath("__file__"))
+    bin_dir = os.path.join(script_dir, 'bin')
+
+    if sys.platform.startswith('linux'):
+        platform = 'linux'
+        url = 'https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz'
+        local_platform_path = os.path.join(bin_dir, platform)
+        local_driver_path = os.path.join(local_platform_path, 'geckodriver')
+        var_separator = ':'
+    elif sys.platform == 'darwin':
+        platform = 'mac'
+        url = 'https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-macos.tar.gz'
+        local_platform_path = os.path.join(bin_dir, platform)
+        local_driver_path = os.path.join(local_platform_path, 'geckodriver')
+        var_separator = ':'
+    elif sys.platform.startswith('win'):
+        platform = 'win'
+        url = 'https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-win64.zip'
+        local_platform_path = os.path.join(bin_dir, platform)
+        local_driver_path = os.path.join(local_platform_path, 'geckodriver.exe')
+        var_separator = ';'
+    else:
+        raise RuntimeError('Could not determine your OS')
+
+    if not os.path.isdir(bin_dir):
+        os.mkdir(bin_dir)
+
+    if not os.path.isdir(local_platform_path):
+        os.mkdir(local_platform_path)
+
+    if not os.path.isfile(local_driver_path):
+        print('Downloading gecko driver...', file=sys.stderr)
+        data_resp = requests.get(url, stream=True)
+        file_name = url.split('/')[-1]
+        tgt_file = os.path.join(local_platform_path, file_name)
+        with open(tgt_file, 'wb') as f:
+            for chunk in data_resp.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        if file_name.endswith('.zip'):
+            with zipfile.ZipFile(tgt_file, 'r') as f_zip:
+                f_zip.extractall(local_platform_path)
+        else:
+            with tarfile.open(tgt_file, 'r') as f_gz:
+                f_gz.extractall(local_platform_path)
+
+        if not os.access(local_driver_path, os.X_OK):
+            os.chmod(local_driver_path, 0o744)
+
+        os.remove(tgt_file)
+
+    if 'PATH' not in os.environ:
+        os.environ['PATH'] = local_platform_path
+    elif local_driver_path not in os.environ['PATH']:
+        os.environ['PATH'] = local_platform_path + var_separator + os.environ['PATH']
+
+```
+
+```{python wines_links_scraping}
+check_gecko_driver()
+
+# Firefox Options and Profils
+ff_options = FirefoxOptions()
+# Uncomment next line to run without open the browser graphically
+# ff_options.add_argument('--headless') 
+firefox_profile = webdriver.FirefoxProfile()
+firefox_profile.set_preference('permissions.default.image', 2)
+firefox_profile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+firefox_profile.set_preference('dom.disable_beforeunload', True)
+firefox_profile.set_preference('browser.tabs.warnOnClose', False)
+firefox_profile.set_preference('media.volume_scale', '0.0')
+driver = webdriver.Firefox(options=ff_options, firefox_profile=firefox_profile)
+
+# Top Wines 
+url = "https://www.vivino.com/explore?e=eJzLLbI10TNSy83MszVQy02ssDU1MFBLrrR1C1JLtnUNDVIrsDVUS0-zLUssykwtScxRyy9KsVXLT6q0VSsviY4FSoIpIwhlDKHMIZQJVM4EAD2gH7s%3D"
+
+# Burgundy  wines 3.8+  and under 40$
+url_bourgogne  = "https://www.vivino.com/explore?e=eJzLLbI11rNQy83MszVQy02ssDU0U0uutHULUku2dQ0NUiuwNVRLT7MtSyzKTC1JzFHLL0qxVctPqrRVK4qOtTW2MAUAj-sUNA%3D%3D" 
+
+# USA Wines 3.8+  and under 40$
+url_usa = "https://www.vivino.com/explore?e=eJzLLbI11rNQy83MszVQy02ssDU2VUuutHULUku2dQ0NUiuwNVRLT7MtSyzKTC1JzFHLL0qxVctPqrQFqiqOjrUtLQYAp28VWg%3D%3D" 
+
+# Open the driver
+driver.get(url_usa)
+sleep(3)
+try:
+    driver.find_element_by_xpath("//span[text()='OK']").click()
+    sleep(1)
+except Exception as e:
+    print(e)
+    
+scroll_pause_time = 2 # You can set your own pause time. My laptop is a bit slow so I use 1 sec
+screen_height = driver.execute_script("return window.screen.height;")   # get the screen height of the web
+i = 1
+
+while True and i <= 50 :
+    # scroll one screen height each time
+    driver.execute_script("window.scrollTo(0, {screen_height}*{i});".format(screen_height=screen_height, i=i))  
+    i += 1
+    sleep(scroll_pause_time)
+    # update scroll height each time after scrolled, as the scroll height can change after we scrolled the page
+    scroll_height = driver.execute_script("return document.body.scrollHeight;")  
+    # Break the loop when the height we need to scroll to is larger than the total scroll height
+    if (screen_height) * i > scroll_height:
+        break 
+
+        
+page = BeautifulSoup(driver.page_source, "html.parser")
+wine_cards = page.select("div.wineCard__wineCard--2dj2T")
+urls = []
+base = 'https://www.vivino.com'
+for wine_card in wine_cards:
+    link = wine_card.select_one("div div a")["href"]
+    url = urljoin(base, link)
+    urls.append(url)
+    
+driver.close()
+driver.quit()
+```
+
+```{r convert_urls_obj}
+#  Convert Python object to R 
+(urls <- py$urls)
+```
+
+```{r scraping_wine_page}
+scrape_wine_page <- function(wine_url){ 
+    
+    # Run the standalone Selenium Server 
+    # java -jar selenium-server-standalone-3.9.1.jar 
+    
+    print(glue::glue("********** Url : {wine_url} **********"))
+    driver <- remoteDriver(
+        remoteServerAddr = "localhost",
+        port = 4444L, # change port according to terminal 
+        browserName = "firefox",
+        # extraCapabilities = list(
+        #     "moz:firefoxOptions" = list(
+        #         args = list('--headless')
+        #     )
+        # )
+    )
+    
+    driver$open()
+    driver$getStatus()
+    driver$navigate(wine_url)
+    
+    Sys.sleep(2)
+    
+    element <- driver$findElement("css", "body")
+    # Scroll down 10 times
+    for(i in 1:10){
+        element$sendKeysToElement(list("key"="page_down"))
+        # please make sure to sleep a couple of seconds to since it takes time to load contents
+        Sys.sleep(1) 
+    }
+    
+    Sys.sleep(2)
+    
+    # get parsed page source
+    wine_page <- driver$getPageSource()[[1]]
+    
+    wine_page <- wine_page %>% 
+        read_html() %>% 
+        html_element("body")
+    
+    driver$close()
+    
+    wine_container <- wine_page %>% 
+        html_element("div.row.container")
+    
+    # Retrieve the different information
+    bottle_image <-  wine_container %>% 
+        html_element("picture img.image") %>% 
+        html_attr("src") %>% 
+        str_c("https:",.)
+    
+    wine_name <- wine_container %>% 
+        html_element("span.vintage") %>% 
+        html_text2()
+    
+    wine_rating <- wine_container %>% 
+        html_element("div.vivinoRating__averageValue--3Navj") %>% 
+        html_text2()
+    
+    wine_rating_nb <- wine_container %>% 
+        html_element("div.vivinoRating__caption--3tZeS") %>% 
+        html_text2()
+    
+    bottle_price <- wine_container %>% 
+        html_element("span.purchaseAvailabilityPPC__amount--2_4GT") %>% 
+        html_text2()
+    
+    if (is.na(bottle_price)) {
+        bottle_price <-  wine_container %>% 
+        html_element("span.purchaseAvailability__currentPrice--3mO4u") %>% 
+        html_text2()
+    }
+
+    food_pairing <- wine_page %>% 
+    html_elements(".foodPairing__foodContainer--1bvxM a div:nth-child(2)") %>%   
+    html_attr("aria-label") %>% 
+    str_c(collapse  = ",")
+
+
+    wine_infos <- 
+        wine_page %>% 
+        html_element("table.wineFacts__wineFacts--2Ih8B") %>%
+        html_elements("tr") %>% 
+        html_text()
+
+
+    viticultural_domain <-  ""
+    grape_variety <- ""
+    region <- ""
+    alcohol_content <- ""
+    wine_style  <- ""
+    allergens <- ""
+    for (wine_info in wine_infos) {
+        print(wine_info)
+        if (str_detect(wine_info, "Domaine viticole")) {
+            viticultural_domain <- str_remove(wine_info, "Domaine viticole")
+        } 
+        else if(str_detect(wine_info, "Cépages"))  {
+            grape_variety <- str_remove(wine_info, "Cépages")
+        } 
+        else if(str_detect(wine_info, "Région"))  {
+            region <- str_remove(wine_info, "Région")
+        } 
+        else if(str_detect(wine_info, "Style de vin"))  {
+            wine_style <- str_remove(wine_info, "Style de vin")
+        } 
+        else if(str_detect(wine_info, "Teneur en alcool"))  {
+            alcohol_content <- str_remove(wine_info, "Teneur en alcool")
+        } 
+        else if(str_detect(wine_info, "AllergènesContient"))  {
+            allergens <- str_remove(wine_info, "AllergènesContient\\s:\\s")
+        } 
+        
+    }
+    # Return Row with the different information
+    tibble(
+        wine_name,
+        wine_style, 
+        viticultural_domain,
+        grape_variety,
+        region,
+        alcohol_content,
+        allergens,
+        food_pairing, 
+        wine_rating, wine_rating_nb, 
+        bottle_price, bottle_image, 
+        wine_url
+    )  
+}
+```
+
+```{r scraping_loop}
+(wines_df <- urls[1:50] %>% 
+    map_df(scrape_wine_page)
+)
+
+write_csv(wines_df, here::here("Data/wines_usa_under_40_top50.csv"))
+```
+
+```{r foods_icons_scraping}
+# Food Svg Scraping 
+main_url <- "https://www.vivino.com/explore?e=eJzLLbI11rNQy83MszVXy02ssDU2UEuutHULUku2dQ0NUiuwNVRLT7MtSyzKTC1JzFHLL0qxVctPqrRVKy-JjrU1BAB9dBRB"
+# java -jar selenium-server-standalone-3.9.1.jar 
+driver <- remoteDriver(
+    remoteServerAddr = "localhost",
+    port = 4444L, # change port according to terminal 
+    browserName = "firefox",
+    # extraCapabilities = list(
+    #     "moz:firefoxOptions" = list(
+    #         args = list('--headless')
+    #     )
+    # )
+)
+
+driver$open()
+driver$getStatus()
+driver$navigate(main_url)
+
+Sys.sleep(2)
+
+# Find Food expansion Button
+expand_foods_btn <- driver$findElements("a.filterPills__toggleAllAction--1In7w", using = "css")
+
+# Clink the first link
+expand_foods_btn[[1]]$clickElement()
+
+
+Sys.sleep(2)
+
+# get parsed page source
+main_page <- driver$getPageSource()[[1]]
+
+
+driver$close()
+
+(food_labels <- main_page %>% 
+    read_html() %>% 
+    html_elements("div.filterPills__items--_grOA") %>% 
+    # Foods section
+    pluck(4) %>% 
+    html_elements("div.pill__inner--2uty5")
+)   
+(foods_svg <- food_labels %>% 
+    html_elements("svg") %>% 
+    map_chr(toString) %>% 
+    str_replace("class=\"foodIcon__foodIcon--2lT0B\"","")
+)
+
+(foods_name <- food_labels %>% 
+        html_elements("span.pill__text--24qI1") %>% 
+        html_text2()  %>% 
+    str_remove("(\\(.*\\))") %>% 
+    str_trim()
+)
+
+foods_icons <- tibble(
+    foods_name,
+    foods_svg
+)
+
+write_csv(foods_icons, here::here("Data/food_icons.csv"))
+```
+
+
