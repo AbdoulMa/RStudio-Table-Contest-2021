@@ -56,7 +56,7 @@ As explained above, I could have done this second part with Python as well, but 
 At this step, I get the different information about a wine, namely:
 
 - its name  (ex: Chablis)
-- its style style (ex: Burgundy Mâconnais White)
+- its style (ex: Burgundy Mâconnais White)
 - its viticultural domain (ex: Domaine Passy le Clou)
 - its grapes varieties (ex: 100 % Chardonnay)
 - its region (ex: France / Bourgogne / Chablis)
@@ -74,7 +74,7 @@ I will use them in my table.
 
 The complete scraping script is also located [here](wines_scraper.Rmd).
 
-If you are here, only for the table making process, don't worry, you can retrieve all the data I used for my tables in the [Data Folder](Data/)
+If you are here, only for the table making process, don't worry, you can retrieve all the data I used for my tables in the [Data Folder](Data/).
 
 ## Table Making 
 ___
