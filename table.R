@@ -648,5 +648,35 @@ webshot::webshot(glue("{path}.html"),glue("{path}.pdf"))
 pdftools::pdf_convert(
   pdf = glue("{path}.pdf"),
   filenames = glue("{path}_from_pdf.png"),
-  dpi =  640
+  dpi =  320
 )
+
+# Burgundy Wines Table ----------------------------------------------------
+(burgundy_under_40 <- wines_bg %>% 
+   sample_n(25) %>% 
+   format_wines_df() %>% 
+   gt() %>% 
+   tab_header(
+     title = html(paste0("<br><br><span style=\"font-size:50px;\">",str_to_upper("Burgundy Wines"),"<span/>")), 
+     subtitle = "Under 40 dollars"
+   ) %>% 
+   tab_theme()
+)
+
+gtsave(burgundy_under_40, "Graphics/burgundy_wines_under_40.png")
+
+# USA Wines Table ---------------------------------------------------------
+(usa_under_40 <- wines_usa %>% 
+   sample_n(25) %>% 
+   format_wines_df() %>% 
+   gt() %>% 
+   tab_header(
+     title = html(paste0("<br><br><span style=\"font-size:50px;\">",str_to_upper("USA Wines"),"<span/>")), 
+     subtitle = "Under 40 dollars"
+   ) %>% 
+   tab_theme()
+)
+
+gtsave(usa_under_40, "Graphics/usa_wines_under_40.png")
+
+
